@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Joker Thief - vs Computer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1: #22213c;
+      --bg2: #1e1b36;
+      --panel-bg: rgba(24,30,52,0.92);
+      --accent-1: #6b21a8;
+      --accent-2: #e11d48;
+      --text-primary: #fffafa;
+      --muted: #cfd5ef;
+    }
+
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      font-family: "Poppins", system-ui, sans-serif;
+      background: radial-gradient(circle at 60% 30%, var(--bg1), var(--bg2) 90%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0 0 24px;
+      text-shadow: 0 2px 14px rgba(85,31,255,0.22);
+    }
+
+    /* Setup Screen */
+    .setup-screen {
+      background: var(--panel-bg);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 500px;
+      margin: 40px auto;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(26,25,57,0.6);
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .setup-screen h2 {
+      margin-top: 0;
+      color: var(--accent-2);
+    }
+
+    .setup-screen label {
+      display: block;
+      margin: 20px 0 8px;
+      text-align: left;
+      color: var(--muted);
+    }
+
+    .setup-screen input, .setup-screen select {
+      width: 100%;
+      padding: 12px;
+      background: rgba(31, 41, 55, 0.9);
+      border: 1px solid #364156;
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 16px;
+    }
+
+    .difficulty-info {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: left;
+    }
+
+    .btn {
+      padding: 12px 32px;
+      background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(81,15,62,0.3);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Game Screen */
+    .game-screen {
+      display: none;
+    }
+
+    .game-screen.active {
+      display: block;
+    }
+
+    .game-info {
+      background: var(--panel-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .turn-indicator {
+      font-size: 18px;
+      font-weight: 600;
+      color: #3b82f6;
+    }
+
+    .stock-count {
+      color: var(--muted);
+    }
+
+    /* Players Grid */
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .player-card {
+      background: var(--panel-bg);
+      border-radius: 12px;
+      padding: 16px;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .player-card.active {
+      border-color: #3b82f6;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+
+    .player-card.human {
+      background: rgba(26, 35, 50, 0.85);
+    }
+
+    .player-card.eliminated {
+      opacity: 0.5;
+    }
+
+    .player-card.has-joker {
+      border-color: #f59e0b;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+      animation: jokerPulse 2s infinite;
+    }
+
+    @keyframes jokerPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.5); }
+      50% { box-shadow: 0 0 30px rgba(245, 158, 11, 0.8); }
+    }
+
+    .player-name {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .player-badge {
+      background: #3b82f6;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    .bot-badge {
+      background: #6b21a8;
+    }
+
+    .joker-badge {
+      background: #f59e0b;
+      animation: badgePulse 1s infinite;
+    }
+
+    @keyframes badgePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .player-stats {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* Hand Area */
+    .hand-area {
+      background: var(--panel-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .hand-area h3 {
+      margin-top: 0;
+      color: var(--accent-2);
+    }
+
+    .hand-controls {
+      margin-bottom: 16px;
+    }
+
+    .cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      min-height: 120px;
+      padding: 12px;
+      background: rgba(20, 24, 36, 0.6);
+      border-radius: 8px;
+    }
+
+    .card {
+      width: 80px;
+      height: 115px;
+      background: linear-gradient(135deg, #fff 70%, #f7fafc 100%);
+      border-radius: 12px;
+      border: 2px solid #d1d5db;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 10px;
+      position: relative;
+      color: #222;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+
+    .card:hover {
+      transform: translateY(-8px) scale(1.05);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+
+    .card.selected {
+      outline: 3px solid #f59e0b;
+      box-shadow: 0 0 0 6px rgba(251, 233, 198, 0.5);
+      transform: translateY(-8px);
+    }
+
+    .card.red { color: #e3342f; }
+    .card.black { color: #111827; }
+
+    .card.joker {
+      background: linear-gradient(135deg, #ffefc1 70%, #fff8dc 100%);
+      color: #ec4899;
+      border: 2px solid #f59e0b;
+      animation: cardShake 0.5s infinite;
+    }
+
+    @keyframes cardShake {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-2deg); }
+      75% { transform: rotate(2deg); }
+    }
+
+    .card.joker:hover {
+      animation: none;
+    }
+
+    .card-corner {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .card-corner.top-left {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+    }
+
+    .card-corner.bottom-right {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      transform: rotate(180deg);
+    }
+
+    .card-suit {
+      font-size: 32px;
+      text-align: center;
+      margin: auto 0;
+    }
+
+    /* Stock Display */
+    .stock-display {
+      background: var(--panel-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .stock-display h3 {
+      margin-top: 0;
+      color: var(--muted);
+    }
+
+    .stock-pairs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pair {
+      background: rgba(31, 37, 51, 0.9);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    /* Game Over Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--panel-bg);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .modal-content h2 {
+      font-size: 32px;
+      margin-top: 0;
+      color: var(--accent-2);
+    }
+
+    .modal-content p {
+      font-size: 18px;
+      color: var(--muted);
+      margin: 20px 0;
+    }
+
+    .joker-reveal {
+      background: rgba(245, 158, 11, 0.2);
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .joker-reveal .big-joker {
+      font-size: 64px;
+      margin: 10px 0;
+      animation: revealPulse 1s infinite;
+    }
+
+    @keyframes revealPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .hidden { display: none; }
+
+    @media (max-width: 768px) {
+      .players-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .card {
+        width: 70px;
+        height: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🃏 Joker Thief - Play vs Computer</h1>
+
+    <!-- Setup Screen -->
+    <div class="setup-screen" id="setupScreen">
+      <h2>Game Setup</h2>
+      <label for="playerName">Your Name:</label>
+      <input type="text" id="playerName" placeholder="Enter your name" value="Player" maxlength="20">
+      
+      <label for="botCount">Number of Computer Players:</label>
+      <select id="botCount">
+        <option value="1">1 Bot (2 players total)</option>
+        <option value="2">2 Bots (3 players total)</option>
+        <option value="3" selected>3 Bots (4 players total)</option>
+        <option value="4">4 Bots (5 players total)</option>
+        <option value="5">5 Bots (6 players total)</option>
+      </select>
+
+      <label for="difficulty">AI Intelligence Level:</label>
+      <select id="difficulty" onchange="updateDifficultyInfo()">
+        <option value="easy">Easy - Basic Random Strategy</option>
+        <option value="medium" selected>Medium - Pattern Recognition</option>
+        <option value="hard">Hard - Advanced ML Strategy</option>
+      </select>
+      <div class="difficulty-info" id="difficultyInfo">
+        <strong>Medium Strategy:</strong> Bots analyze card patterns, track Joker movements, and strategically pass risky cards. They use probability-based decisions.
+      </div>
+
+      <button class="btn" onclick="startGame()">Start Game</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="game-screen" id="gameScreen">
+      <div class="game-info">
+        <div class="turn-indicator" id="turnIndicator">Your turn!</div>
+        <div class="stock-count" id="stockCount">Stocked pairs: 0</div>
+      </div>
+
+      <div class="players-grid" id="playersGrid"></div>
+
+      <div class="stock-display">
+        <h3>Stocked Pairs</h3>
+        <div class="stock-pairs" id="stockPairs">
+          <div style="color: #6b7280;">No pairs yet</div>
+        </div>
+      </div>
+
+      <div class="hand-area">
+        <h3>Your Hand</h3>
+        <div class="hand-controls">
+          <button class="btn" id="autoPairBtn" onclick="autoPair()">Auto-Stock Pairs</button>
+          <button class="btn" id="giveCardBtn" onclick="giveCard()" disabled>Give Selected Card</button>
+        </div>
+        <div class="cards-container" id="cardsContainer"></div>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="modal" id="gameOverModal">
+      <div class="modal-content">
+        <h2 id="gameOverTitle">Game Over!</h2>
+        <div class="joker-reveal">
+          <div class="big-joker">🃏</div>
+          <p id="jokerHolder" style="font-size: 20px; font-weight: 600; color: #f59e0b;"></p>
+        </div>
+        <p id="gameOverMessage"></p>
+        <button class="btn" onclick="resetGame()">Play Again</button>
+        <button class="btn" onclick="backToSetup()" style="background: rgba(31, 41, 55, 0.9);">Back to Setup</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUITS = ["♠", "♣", "♥", "♦"];
+    const RANKS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+    
+    let players = [];
+    let currentTurnIndex = 0;
+    let selectedCardIndex = null;
+    let stock = [];
+    let difficulty = 'medium';
+    let gameOver = false;
+    let jokerLastKnownPosition = null;
+    let turnHistory = [];
+
+    function updateDifficultyInfo() {
+      const diff = document.getElementById('difficulty').value;
+      const info = document.getElementById('difficultyInfo');
+      
+      const descriptions = {
+        easy: '<strong>Easy Strategy:</strong> Bots make random card selections with occasional Joker avoidance.',
+        medium: '<strong>Medium Strategy:</strong> Bots analyze card patterns, track Joker movements, and strategically pass risky cards. They use probability-based decisions.',
+        hard: '<strong>Hard Strategy:</strong> Advanced AI with memory, card counting, opponent modeling, and strategic deception. Uses neural network-inspired decision making.'
+      };
+      
+      info.innerHTML = descriptions[diff];
+    }
+
+    function buildDeck() {
+      const deck = [];
+      for (const suit of SUITS) {
+        for (const rank of RANKS) {
+          deck.push({
+            id: `${rank}${suit}`,
+            rank,
+            suit,
+            color: (suit === "♥" || suit === "♦") ? "red" : "black"
+          });
+        }
+      }
+      deck.push({ id: "JK", rank: "JK", suit: "🃏", color: "joker" });
+      return deck;
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function dealCards(deck, numPlayers) {
+      const hands = Array.from({ length: numPlayers }, () => []);
+      let i = 0;
+      while (deck.length > 0) {
+        hands[i % numPlayers].push(deck.pop());
+        i++;
+      }
+      return hands;
+    }
+
+    function findPairs(hand) {
+      const groups = new Map();
+      for (const card of hand) {
+        const key = `${card.rank}-${card.color}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(card);
+      }
+      
+      const remaining = [];
+      const pairs = [];
+      
+      for (const [key, cards] of groups) {
+        while (cards.length >= 2) {
+          const a = cards.pop();
+          const b = cards.pop();
+          pairs.push([a, b]);
+        }
+        if (cards.length === 1) {
+          remaining.push(cards[0]);
+        }
+      }
+      
+      return { remaining, pairs };
+    }
+
+    function hasJoker(hand) {
+      return hand.some(card => card.id === 'JK');
+    }
+
+    function startGame() {
+      const playerName = document.getElementById('playerName').value.trim() || 'Player';
+      const botCount = parseInt(document.getElementById('botCount').value);
+      difficulty = document.getElementById('difficulty').value;
+      
+      // Initialize players
+      players = [{
+        name: playerName,
+        hand: [],
+        isHuman: true,
+        eliminated: false,
+        botMemory: null
+      }];
+      
+      for (let i = 0; i < botCount; i++) {
+        players.push({
+          name: `Bot ${i + 1}`,
+          hand: [],
+          isHuman: false,
+          eliminated: false,
+          botMemory: {
+            cardsReceived: [],
+            suspiciousCards: new Set(),
+            jokerProbability: {},
+            riskScores: {}
+          }
+        });
+      }
+      
+      // Deal cards
+      const deck = shuffle(buildDeck());
+      const hands = dealCards(deck, players.length);
+      
+      players.forEach((player, idx) => {
+        player.hand = hands[idx];
+        const result = findPairs(player.hand);
+        player.hand = result.remaining;
+        stock.push(...result.pairs);
+        
+        // Track initial Joker position
+        if (hasJoker(player.hand)) {
+          jokerLastKnownPosition = idx;
+        }
+      });
+      
+      currentTurnIndex = 0;
+      selectedCardIndex = null;
+      gameOver = false;
+      turnHistory = [];
+      
+      document.getElementById('setupScreen').style.display = 'none';
+      document.getElementById('gameScreen').classList.add('active');
+      
+      updateUI();
+      processNextTurn();
+    }
+
+    function updateUI() {
+      // Update turn indicator
+      const currentPlayer = players[currentTurnIndex];
+      document.getElementById('turnIndicator').textContent = 
+        currentPlayer.isHuman ? "Your turn!" : `${currentPlayer.name}'s turn...`;
+      
+      // Update stock count
+      document.getElementById('stockCount').textContent = `Stocked pairs: ${stock.length}`;
+      
+      // Update players grid
+      const playersGrid = document.getElementById('playersGrid');
+      playersGrid.innerHTML = '';
+      players.forEach((player, idx) => {
+        const card = document.createElement('div');
+        const hasJokerCard = hasJoker(player.hand);
+        
+        let className = `player-card ${player.isHuman ? 'human' : ''} ${idx === currentTurnIndex ? 'active' : ''} ${player.eliminated ? 'eliminated' : ''}`;
+        if (gameOver && hasJokerCard) {
+          className += ' has-joker';
+        }
+        card.className = className;
+        
+        const badge = player.isHuman ? 
+          '<span class="player-badge">YOU</span>' : 
+          '<span class="player-badge bot-badge">BOT</span>';
+        
+        const jokerBadge = (gameOver && hasJokerCard) ? 
+          '<span class="player-badge joker-badge">🃏 JOKER</span>' : '';
+        
+        const status = player.eliminated ? ' ✅ Safe' : '';
+        
+        card.innerHTML = `
+          <div class="player-name">${player.name} ${badge} ${jokerBadge}</div>
+          <div class="player-stats">Cards: ${player.hand.length}${status}</div>
+        `;
+        playersGrid.appendChild(card);
+      });
+      
+      // Update stock pairs
+      const stockPairs = document.getElementById('stockPairs');
+      if (stock.length === 0) {
+        stockPairs.innerHTML = '<div style="color: #6b7280;">No pairs yet</div>';
+      } else {
+        stockPairs.innerHTML = stock.map(pair => 
+          `<div class="pair">${pair[0].id} + ${pair[1].id}</div>`
+        ).join('');
+      }
+      
+      // Update hand (only for human player)
+      updateHandUI();
+    }
+
+    function updateHandUI() {
+      const humanPlayer = players.find(p => p.isHuman);
+      const container = document.getElementById('cardsContainer');
+      const isMyTurn = players[currentTurnIndex].isHuman;
+      
+      container.innerHTML = '';
+      
+      if (humanPlayer.hand.length === 0) {
+        container.innerHTML = '<div style="color: #6b7280; padding: 20px;">No cards - you\'re safe!</div>';
+        document.getElementById('autoPairBtn').disabled = true;
+        document.getElementById('giveCardBtn').disabled = true;
+        return;
+      }
+      
+      humanPlayer.hand.forEach((card, idx) => {
+        const cardEl = document.createElement('div');
+        const isJoker = card.id === 'JK';
+        cardEl.className = `card ${isJoker ? 'joker' : card.color}`;
+        
+        if (isJoker) {
+          cardEl.innerHTML = `
+            <div class="card-corner top-left">🃏</div>
+            <div class="card-suit">JOKER</div>
+            <div class="card-corner bottom-right">🃏</div>
+          `;
+        } else {
+          cardEl.innerHTML = `
+            <div class="card-corner top-left">${card.rank}<br>${card.suit}</div>
+            <div class="card-suit">${card.suit}</div>
+            <div class="card-corner bottom-right">${card.rank}<br>${card.suit}</div>
+          `;
+        }
+        
+        if (isMyTurn) {
+          cardEl.onclick = () => selectCard(idx);
+          if (idx === selectedCardIndex) {
+            cardEl.classList.add('selected');
+          }
+        }
+        
+        container.appendChild(cardEl);
+      });
+      
+      document.getElementById('autoPairBtn').disabled = !isMyTurn;
+      document.getElementById('giveCardBtn').disabled = !isMyTurn || selectedCardIndex === null;
+    }
+
+    function selectCard(idx) {
+      selectedCardIndex = idx;
+      updateHandUI();
+    }
+
+    function autoPair() {
+      const humanPlayer = players.find(p => p.isHuman);
+      const result = findPairs(humanPlayer.hand);
+      humanPlayer.hand = result.remaining;
+      stock.push(...result.pairs);
+      selectedCardIndex = null;
+      updateUI();
+    }
+
+    function giveCard() {
+      const currentPlayer = players[currentTurnIndex];
+      if (selectedCardIndex === null || selectedCardIndex >= currentPlayer.hand.length) return;
+      
+      const card = currentPlayer.hand.splice(selectedCardIndex, 1)[0];
+      const nextPlayerIndex = getNextPlayerIndex();
+      const nextPlayer = players[nextPlayerIndex];
+      
+      // Track Joker movement
+      if (card.id === 'JK') {
+        jokerLastKnownPosition = nextPlayerIndex;
+      }
+      
+      nextPlayer.hand.push(card);
+      
+      // Bot memory update
+      if (!nextPlayer.isHuman && nextPlayer.botMemory) {
+        nextPlayer.botMemory.cardsReceived.push({
+          from: currentTurnIndex,
+          card: card,
+          turn: turnHistory.length
+        });
+      }
+      
+      // Auto-pair for recipient
+      const result = findPairs(nextPlayer.hand);
+      nextPlayer.hand = result.remaining;
+      stock.push(...result.pairs);
+      
+      selectedCardIndex = null;
+      turnHistory.push({ from: currentTurnIndex, to: nextPlayerIndex, cardWasJoker: card.id === 'JK', cardRank: card.rank });
+      
+      // Check if current player is eliminated
+      if (currentPlayer.hand.length === 0) {
+        currentPlayer.eliminated = true;
+      }
+      
+      currentTurnIndex = nextPlayerIndex;
+      
+      if (checkGameOver()) {
+        endGame();
+      } else {
+        updateUI();
+        processNextTurn();
+      }
+    }
+
+    function getNextPlayerIndex() {
+      let next = (currentTurnIndex + 1) % players.length;
+      while (players[next].hand.length === 0 && next !== currentTurnIndex) {
+        next = (next + 1) % players.length;
+      }
+      return next;
+    }
+
+    function processNextTurn() {
+      if (gameOver) return;
+      
+      const currentPlayer = players[currentTurnIndex];
+      
+      if (currentPlayer.isHuman) {
+        return;
+      }
+      
+      // Bot turn with strategic delay
+      setTimeout(() => {
+        if (gameOver) return;
+        botPlay();
+      }, 1500);
+    }
+
+    function calculateCardRiskScore(card, bot, nextPlayerIdx) {
+      let risk = 0.5; // Base risk
+      
+      // Joker is maximum risk
+      if (card.id === 'JK') return 1.0;
+      
+      // Check if card could pair with next player's known patterns
+      const nextPlayer = players[nextPlayerIdx];
+      
+      // Higher risk for cards that are less likely to pair
+      const sameRankInHand = bot.hand.filter(c => c.rank === card.rank && c.id !== card.id).length;
+      if (sameRankInHand === 0) risk += 0.2;
+      
+      // Lower risk for cards that might pair soon
+      if (sameRankInHand > 0) risk -= 0.3;
+      
+      return Math.max(0, Math.min(1, risk));
+    }
+
+    function botPlay() {
+      const bot = players[currentTurnIndex];
+      
+      // CRITICAL: Bots must auto-pair first to reduce their hand
+      const result = findPairs(bot.hand);
+      const pairedCount = result.pairs.length;
+      bot.hand = result.remaining;
+      stock.push(...result.pairs);
+      
+      if (pairedCount > 0) {
+        console.log(`${bot.name} stocked ${pairedCount} pair(s)`);
+      }
+      
+      updateUI();
+      
+      // If bot has no cards left after pairing, they're safe!
+      if (bot.hand.length === 0) {
+        bot.eliminated = true;
+        currentTurnIndex = getNextPlayerIndex();
+        if (checkGameOver()) {
+          endGame();
+        } else {
+          updateUI();
+          processNextTurn();
+        }
+        return;
+      }
+      
+      setTimeout(() => {
+        if (gameOver) return;
+        
+        let cardIndex;
+        
+        if (difficulty === 'easy') {
+          // Easy: Prioritize passing Joker, but also pass other risky cards
+          const jokerIdx = bot.hand.findIndex(c => c.id === 'JK');
+          
+          if (jokerIdx !== -1 && Math.random() > 0.2) {
+            // 80% chance to pass Joker
+            cardIndex = jokerIdx;
+          } else {
+            // Otherwise pick any random card
+            cardIndex = Math.floor(Math.random() * bot.hand.length);
+          }
+        } else if (difficulty === 'medium') {
+          // Medium: Smart strategy - always try to pass Joker first, then risky cards
+          const jokerIdx = bot.hand.findIndex(c => c.id === 'JK');
+          
+          if (jokerIdx !== -1) {
+            // ALWAYS pass Joker if we have it
+            cardIndex = jokerIdx;
+          } else {
+            // No Joker - analyze other cards by risk
+            const nextPlayerIdx = getNextPlayerIndex();
+            const memory = bot.botMemory;
+            const scores = bot.hand.map((card, idx) => {
+              let risk = 0.5;
+              
+              // Check if card could pair later
+              const sameRankInHand = bot.hand.filter(c => 
+                c.rank === card.rank && c.color === card.color && c.id !== card.id
+              ).length;
+              
+              // Cards that won't pair are risky to keep
+              if (sameRankInHand === 0) {
+                risk += 0.4;
+              } else {
+                // Cards that could pair should be kept
+                risk -= 0.3;
+              }
+              
+              // Recently received cards might be suspicious
+              if (memory && memory.cardsReceived.length > 0) {
+                const recent = memory.cardsReceived.slice(-2).find(r =>
+                  r.card.rank === card.rank && r.card.color === card.color
+                );
+                if (recent) risk += 0.2;
+              }
+              
+              return { index: idx, card: card, risk: Math.max(0, Math.min(1, risk)) };
+            });
+            
+            // Sort by risk (highest first)
+            scores.sort((a, b) => b.risk - a.risk);
+            
+            // Pick from top risky cards with some randomness
+            const topCandidates = scores.slice(0, Math.max(1, Math.ceil(scores.length * 0.4)));
+            cardIndex = topCandidates[Math.floor(Math.random() * topCandidates.length)].index;
+          }
+        } else { // hard
+          // Hard: Advanced ML-inspired strategy
+          const nextPlayerIdx = getNextPlayerIndex();
+          const memory = bot.botMemory;
+          const jokerIdx = bot.hand.findIndex(c => c.id === 'JK');
+          
+          if (jokerIdx !== -1) {
+            // ALWAYS pass Joker immediately - top priority
+            cardIndex = jokerIdx;
+          } else {
+            // No Joker - use advanced analysis
+            const cardAnalysis = bot.hand.map((card, idx) => {
+              let suspicionScore = 0;
+              
+              // Analyze pairing potential
+              const canPair = bot.hand.some(c => 
+                c.id !== card.id && c.rank === card.rank && c.color === card.color
+              );
+              
+              // High priority to pass non-pairable cards
+              if (!canPair) {
+                suspicionScore += 40;
+              } else {
+                // Keep pairable cards for next turn
+                suspicionScore -= 20;
+              }
+              
+              // Analyze if this card was recently received (might be hot potato)
+              const recentReceive = memory.cardsReceived.slice(-3).find(r => 
+                r.card.rank === card.rank && r.card.color === card.color
+              );
+              if (recentReceive) suspicionScore += 25;
+              
+              // Consider next player's hand size
+              const nextPlayer = players[nextPlayerIdx];
+              if (nextPlayer.hand.length > 4) {
+                // They have many cards, less risky to give them anything
+                suspicionScore += 10;
+              } else if (nextPlayer.hand.length <= 2) {
+                // They're close to winning, be more cautious
+                suspicionScore += 5;
+              }
+              
+              // Card counting: prefer passing cards of ranks we've seen often
+              const sameRankCount = turnHistory.filter(h => 
+                h.cardRank === card.rank
+              ).length;
+              if (sameRankCount > 2) suspicionScore += 15;
+              
+              // Strategic variance to avoid predictability
+              suspicionScore += (Math.random() - 0.5) * 10;
+              
+              return { index: idx, card: card, score: Math.max(0, suspicionScore) };
+            });
+            
+            // Sort by suspicion score
+            cardAnalysis.sort((a, b) => b.score - a.score);
+            
+            // Temperature-based selection (softmax)
+            const temperature = 0.6;
+            const expScores = cardAnalysis.map(a => Math.exp(a.score / temperature));
+            const sumExp = expScores.reduce((sum, val) => sum + val, 0);
+            const probabilities = expScores.map(e => e / sumExp);
+            
+            // Sample from probability distribution
+            let random = Math.random();
+            let cumulative = 0;
+            for (let i = 0; i < probabilities.length; i++) {
+              cumulative += probabilities[i];
+              if (random <= cumulative) {
+                cardIndex = cardAnalysis[i].index;
+                break;
+              }
+            }
+            
+            // Fallback to highest score if sampling failed
+            if (cardIndex === undefined) {
+              cardIndex = cardAnalysis[0].index;
+            }
+          }
+        }
+        
+        const card = bot.hand.splice(cardIndex, 1)[0];
+        const nextPlayerIndex = getNextPlayerIndex();
+        const nextPlayer = players[nextPlayerIndex];
+        
+        // Track Joker movement
+        if (card.id === 'JK') {
+          jokerLastKnownPosition = nextPlayerIndex;
+        }
+        
+        nextPlayer.hand.push(card);
+        
+        // Bot memory update for recipient
+        if (!nextPlayer.isHuman && nextPlayer.botMemory) {
+          nextPlayer.botMemory.cardsReceived.push({
+            from: currentTurnIndex,
+            card: card,
+            turn: turnHistory.length
+          });
+        }
+        
+        // Auto-pair for recipient
+        const pairResult = findPairs(nextPlayer.hand);
+        nextPlayer.hand = pairResult.remaining;
+        stock.push(...pairResult.pairs);
+        
+        turnHistory.push({ 
+          from: currentTurnIndex, 
+          to: nextPlayerIndex, 
+          cardWasJoker: card.id === 'JK',
+          cardRank: card.rank
+        });
+        
+        // Check elimination
+        if (bot.hand.length === 0) {
+          bot.eliminated = true;
+        }
+        
+        currentTurnIndex = nextPlayerIndex;
+        
+        if (checkGameOver()) {
+          endGame();
+        } else {
+          updateUI();
+          processNextTurn();
+        }
+      }, 1000);
+    }
+
+    function checkGameOver() {
+      const totalCards = players.reduce((sum, p) => sum + p.hand.length, 0);
+      if (totalCards !== 1) return false;
+      
+      const loserIndex = players.findIndex(p => p.hand.length === 1);
+      return players[loserIndex].hand[0].id === 'JK';
+    }
+
+    function endGame() {
+      gameOver = true;
+      const loserIndex = players.findIndex(p => p.hand.length === 1 && p.hand[0].id === 'JK');
+      const loser = players[loserIndex];
+      
+      // Update UI to show who has the Joker
+      updateUI();
+      
+      const modal = document.getElementById('gameOverModal');
+      const title = document.getElementById('gameOverTitle');
+      const message = document.getElementById('gameOverMessage');
+      const jokerHolder = document.getElementById('jokerHolder');
+      
+      jokerHolder.textContent = `${loser.name} is holding the Joker!`;
+      
+      if (loser.isHuman) {
+        title.textContent = '😢 You Lost!';
+        title.style.color = '#e11d48';
+        message.textContent = 'You were caught with the Joker! The card has been revealed above. Better luck next time!';
+      } else {
+        title.textContent = '🎉 You Won!';
+        title.style.color = '#10b981';
+        message.textContent = `${loser.name} was caught with the Joker! You successfully avoided it. Congratulations!`;
+      }
+      
+      modal.classList.add('active');
+    }
+
+    function resetGame() {
+      document.getElementById('gameOverModal').classList.remove('active');
+      stock = [];
+      startGame();
+    }
+
+    function backToSetup() {
+      document.getElementById('gameOverModal').classList.remove('active');
+      document.getElementById('gameScreen').classList.remove('active');
+      document.getElementById('setupScreen').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

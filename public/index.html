@@ -1,920 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Joker Thief - Multiplayer</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Joker Thief - Play Now!</title>
+
+  <!-- Google font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
   <style>
-    * { box-sizing: border-box; font-family: system-ui, Arial, sans-serif; }
-    body { margin: 0; background: #0e0f13; color: #e9eef2; overflow-x: hidden; }
-    
-    /* Galaxy Background */
-    #galaxy-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
+    :root{
+      --bg1: #22213c;
+      --bg2: #1e1b36;
+      --panel-bg: rgba(24,30,52,0.92);
+      --accent-1: #6b21a8;
+      --accent-2: #e11d48;
+      --text-primary: #fffafa;
+      --muted: #cfd5ef;
+    }
+
+    html,body {
       height: 100%;
-      z-index: 0;
-      pointer-events: none;
+      margin: 0;
+      font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
     }
-    
-    .app { 
-      max-width: 1000px; 
-      margin: 24px auto; 
-      padding: 0 16px; 
-      position: relative;
-      z-index: 1;
+
+    body{
+      min-width: 300px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: radial-gradient(circle at 60% 30%, var(--bg1), var(--bg2) 90%);
+      padding: 24px;
+      box-sizing: border-box;
     }
-    h1 { margin: 0 0 16px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
-    
-    .lobby { 
-      background: rgba(20, 24, 36, 0.85); 
-      border: 1px solid rgba(42, 47, 60, 0.8); 
-      border-radius: 8px; 
-      padding: 20px; 
-      margin-bottom: 20px;
-      backdrop-filter: blur(10px);
-    }
-    .lobby input { 
-      width: 200px; padding: 8px 12px; background: rgba(31, 41, 55, 0.9); color: #e9eef2; 
-      border: 1px solid #364156; border-radius: 6px; margin-right: 8px;
-    }
-    .lobby button { margin-right: 8px; }
-    .room-info { 
-      background: rgba(31, 37, 51, 0.9); padding: 12px; border-radius: 6px; margin-top: 12px;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .room-code { font-size: 24px; font-weight: bold; color: #3b82f6; }
-    
-    .status { margin: 8px 0 16px; color: #cfd8dc; }
-    .status > div { margin: 4px 0; }
-    
-    .table { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
-    .players { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-    .player {
-      border: 1px solid rgba(42, 47, 60, 0.8); 
-      border-radius: 8px; 
-      padding: 10px; 
-      background: rgba(20, 24, 36, 0.85);
-      backdrop-filter: blur(10px);
-      position: relative;
-    }
-    .player.me { background: rgba(26, 35, 50, 0.85); }
-    .player.activeP { outline: 2px solid #3b82f6; }
-    .player .badge {
-      position: absolute; top: 8px; right: 8px;
-      background: #3b82f6; color: white; padding: 2px 6px;
-      border-radius: 4px; font-size: 11px; font-weight: bold;
-    }
-    
-    .stock { 
-      border: 1px dashed rgba(42, 47, 60, 0.8); 
-      border-radius: 8px; 
-      padding: 10px;
-      background: rgba(20, 24, 36, 0.6);
-      backdrop-filter: blur(10px);
-    }
-    .stock h3 { margin: 0 0 8px; font-size: 16px; }
-    #stockArea { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .pair { background: rgba(31, 37, 51, 0.9); padding: 6px 8px; border-radius: 6px; font-size: 13px; }
-    
-    .active { 
-      grid-column: 1 / -1; 
-      border: 1px solid rgba(42, 47, 60, 0.8); 
-      border-radius: 8px; 
-      padding: 10px; 
-      background: rgba(20, 24, 36, 0.85);
-      backdrop-filter: blur(10px);
-    }
-    .active h3 { margin: 0 0 12px; font-size: 16px; }
-    .controls { margin-bottom: 12px; }
-    .hand { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; min-height: 80px; }
-    .card {
-      width: 70px;
-      height: 100px;
-      background: linear-gradient(135deg, #fff 70%, #f7fafc 100%);
-      border-radius: 12px;
-      border: 2px solid #d1d5db;
-      box-shadow: 0 4px 12px 0 #0003, 0 1.5px 8px 0 #0000000d inset;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: flex-start;
-      padding: 8px 8px 6px 8px;
-      position: relative;
-      color: #222;
-      font-family: 'Segoe UI Symbol', 'Arial Unicode MS', Arial, sans-serif;
-      transition: transform 0.19s, box-shadow 0.19s;
-      font-weight: 600;
-      cursor: pointer;
-      user-select: none;
-    }
-    .card:hover {
-      transform: scale(1.05) translateY(-5px);
-      box-shadow: 0 8px 18px 0 #0005, 0 2px 12px 0 #0000001a inset;
-    }
-    .card.selected {
-      outline: 3px solid #f59e0b;
-      box-shadow: 0 0 0 6px #fbe9c6;
-      z-index: 2;
-    }
-    .card .corner {
-      font-size: 18px;
-      font-weight: bold;
-      line-height: 1;
-      position: absolute;
-    }
-    .card .corner.tl { top: 8px; left: 9px; }
-    .card .corner.br { bottom: 8px; right: 9px; transform: rotate(180deg);}
-    .card .suit-big {
-      font-size: 34px;
-      margin: auto;
+
+    .center-box{
       width: 100%;
-      text-align: center;
-    }
-    .card.red { color: #e3342f; }
-    .card.black { color: #111827; }
-    .card.joker {
-      background: linear-gradient(135deg, #ffefc1 70%, #fff8dc 100%);
-      color: #ec4899;
-      border: 2px solid #f59e0b;
-    }
-    .card.joker .suit-big { font-size: 10px; text-shadow: 0 1px 6px #fff9; }
-    
-    button { 
-      background: rgba(31, 41, 55, 0.9); 
-      color: #e9eef2; 
-      border: 1px solid #364156; 
-      border-radius: 6px; 
-      padding: 8px 12px; 
-      cursor: pointer; 
-      transition: background 0.2s;
-    }
-    button:hover:not(:disabled) { background: #243042; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    button.primary { background: #3b82f6; border-color: #3b82f6; }
-    button.primary:hover:not(:disabled) { background: #2563eb; }
-    
-    .hidden { display: none; }
-    .error { 
-      background: rgba(153, 27, 27, 0.9); 
-      color: white; 
-      padding: 12px; 
-      border-radius: 6px; 
-      margin: 12px 0;
-      backdrop-filter: blur(10px);
+      max-width: 520px;
+      text-align:center;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding: 48px 36px 36px;
+      background: var(--panel-bg);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(26,25,57,0.6);
+      border: 1px solid rgba(255,255,255,0.03);
+      transform: translateZ(0); /* fix for some browsers */
     }
 
-    /* Timer Styles */
-.timer-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 12px;
-  background: rgba(31, 37, 51, 0.9);
-  border-radius: 8px;
-  border: 2px solid #3b82f6;
-}
-
-.timer-container.warning {
-  border-color: #f59e0b;
-  animation: pulse 1s infinite;
-}
-
-.timer-container.danger {
-  border-color: #ef4444;
-  animation: pulse 0.5s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-.timer-display {
-  font-size: 32px;
-  font-weight: bold;
-  min-width: 60px;
-  text-align: center;
-  color: #3b82f6;
-}
-
-.timer-display.warning { color: #f59e0b; }
-.timer-display.danger { color: #ef4444; }
-
-.timer-bar-container {
-  flex: 1;
-  height: 24px;
-  background: rgba(20, 24, 36, 0.8);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.timer-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #60a5fa);
-  transition: width 0.1s linear;
-  border-radius: 12px;
-}
-
-.timer-bar.warning {
-  background: linear-gradient(90deg, #f59e0b, #fbbf24);
-}
-
-.timer-bar.danger {
-  background: linear-gradient(90deg, #ef4444, #f87171);
-}
-
-.timer-text {
-  font-size: 14px;
-  color: #9ca3af;
-}
-    
-    .rules { 
-      background: rgba(20, 24, 36, 0.85); 
-      border: 1px solid rgba(42, 47, 60, 0.8); 
-      border-radius: 8px; 
-      padding: 12px; 
-      margin-top: 16px;
-      font-size: 14px; 
-      line-height: 1.6;
-      backdrop-filter: blur(10px);
+    .brand {
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:8px;
     }
-    .rules h3 { margin: 0 0 8px; font-size: 15px; }
-    .rules ul { margin: 8px 0; padding-left: 20px; }
-    .rules li { margin: 4px 0; }
 
-    .chat-sidebar {
-  position: fixed;
-  top: 0; right: 0; height: 100vh; width: 270px;
-  background: rgba(24, 28, 40, 0.92);
-  box-shadow: -4px 0 24px #0006;
-  border-left: 1.5px solid #242c3f;
-  z-index: 30;
-  display: flex; flex-direction: column;
-}
-.chat-header {
-  font-weight: bold; font-size: 18px; padding: 18px 16px 12px 16px;
-  border-bottom: 1px solid #31394c; color: #f59e0b;
-  letter-spacing: 0.02em;
-}
-.chat-messages {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  padding: 16px;
-  font-size: 14px;
-  color: #e9eef2;
-  word-break: break-word;
-}
-.chat-form {
-  display: flex; border-top: 1px solid #2b3246;
-  padding: 12px 10px;
-  background: rgba(20,24,36,0.85);
-}
-#chatInput {
-  flex: 1 1 auto; padding: 8px 10px; border-radius: 6px;
-  border: 1px solid #444b67; margin-right: 8px; font-size: 14px; background: #191e2a; color: #e9eef2;
-}
-.chat-form button {
-  background: #3b82f6; color: #fff; font-weight:bold; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer;
-  transition: background 0.2s;
-}
-.chat-form button:hover { background: #2563eb; }
-.chat-message { margin-bottom: 11px; }
-.chat-message.self { color: #7dd3fc; text-align: right;}
-.chat-message .meta { opacity: 0.7; font-size: 13px; margin-right: 4px; }
+    .brand img {
+      width:44px;
+      height:44px;
+      object-fit:contain;
+      border-radius:8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    }
 
-.game-layout {
-  display: flex;
-  flex-direction: row;
-  height: 100vh;
-  width: 100vw;
-  /* So both content areas use full screen space side by side */
-}
+    h1{
+      font-size: 2.1rem;
+      color: var(--text-primary);
+      margin: 6px 0 18px;
+      letter-spacing: 0.2px;
+      text-shadow: 0 2px 14px rgba(85,31,255,0.22);
+      font-weight:700;
+    }
 
-.app {
-  flex: 1 1 0%;
-  max-width: none;
-  min-width: 0;
-  z-index: 1;
-  /* Add padding if you want separation from the chat bar */
-}
+    .desc{
+      font-size: 1.05rem;
+      color: var(--muted);
+      margin-bottom: 30px;
+      line-height:1.4;
+      max-width: 440px;
+    }
 
-.chat-sidebar {
-  width: 320px; /* wider for chat scrolling/typing */
-  min-width: 240px;
-  max-width: 480px;
-  height: 100vh;
-  position: relative; /* NOT fixed */
-  box-shadow: -4px 0 24px #0006;
-  border-left: 1.5px solid #242c3f;
-  z-index: 2;
-  display: flex; flex-direction: column;
-  background: rgba(24, 28, 40, 0.92);
-}
+    .btn-row{
+      width:100%;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items:center;
+    }
 
+    /* Primary button */
+    .landing-btn{
+      width: 100%;
+      max-width: 360px;
+      font-size: 1.06rem;
+      padding: 14px 32px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(90deg, var(--accent-1) 0%, var(--accent-2) 100%);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 3px 10px rgba(81,31,47,0.27);
+      cursor:pointer;
+      transition: transform .14s, box-shadow .14s;
+      outline: none;
+      letter-spacing: 0.4px;
+    }
 
+    .landing-btn:hover{ transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 30px rgba(81,15,62,0.22); }
+    .landing-btn:active{ transform: translateY(-1px) scale(1.01); }
+    .landing-btn:focus{ box-shadow: 0 0 0 4px rgba(99,66,255,0.14); }
+
+    .secondary{
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: none;
+      font-weight:500;
+    }
+
+    .coming-soon{
+      font-size:0.92rem;
+      color: #f59e0b;
+      margin-top:10px;
+      opacity:0.95;
+      text-shadow: 0 1px 7px rgba(33,33,60,0.34);
+    }
+
+    /* Responsive: side-by-side buttons on larger screens */
+    @media (min-width:740px){
+      .btn-row{
+        flex-direction:row;
+        justify-content:center;
+      }
+      .landing-btn{ max-width: 260px; }
+    }
+
+    /* Mobile adjustments */
+    @media (max-width:420px){
+      .center-box{ padding: 28px 18px; border-radius:12px; }
+      h1{ font-size:1.6rem; }
+      .desc{ font-size:0.98rem; }
+    }
   </style>
 </head>
 <body>
-<canvas id="galaxy-canvas"></canvas>
-<div class="game-layout">
-  <main class="app">
-    <h1>🃏 Joker Thief - Multiplayer</h1>
-
-    <!-- Lobby -->
-    <section id="lobbySection" class="lobby">
-      <h3>Join or Create a Game</h3>
-      <div style="margin: 16px 0;">
-        <input id="playerNameInput" type="text" placeholder="Your name" maxlength="20">
-      </div>
-      <div>
-        <button id="createRoomBtn" class="primary">Create Room</button>
-        <input id="roomCodeInput" type="text" placeholder="Room Code" maxlength="6" style="width: 120px;">
-        <button id="joinRoomBtn">Join Room</button>
-      </div>
-      <div id="errorMsg" class="error hidden"></div>
-      <div id="roomInfoDiv" class="hidden room-info">
-        <div>
-          <div style="font-size: 12px; color: #9ca3af;">Room Code:</div>
-          <div class="room-code" id="roomCode"></div>
-        </div>
-        <button id="startGameBtn" class="primary hidden">Start Game</button>
-      </div>
-    </section>
-
-    <!-- Game -->
-    <section id="gameSection" class="hidden">
-      <div class="status">
-        <div id="turnInfo"></div>
-        <div id="gameInfo"></div>
-      </div>
-
-      <div class="table">
-        <div class="players" id="playersPanel"></div>
-
-        <div class="stock">
-          <h3>Stocked Pairs</h3>
-          <div id="stockArea"></div>
-        </div>
-
-        <div class="active">
-          <h3>Your Hand</h3>
-          <div id="timerContainer" class="timer-container hidden">
-           <div id="timerDisplay" class="timer-display">30</div>
-             <div class="timer-bar-container">
-                <div id="timerBar" class="timer-bar"></div>
-                </div>
-             <div class="timer-text">seconds left</div>
-            </div>
-
-
-          <div class="controls">
-            <button id="autoPairBtn">Auto-Stock Pairs</button>
-          </div>
-          <div id="activeHand" class="hand"></div>
-          <button id="giveCardBtn" disabled>Give Selected Card → Next Player</button>
-        </div>
-      </div>
-    </section>
-
-    <div class="rules">
-      <h3>How to Play:</h3>
-      <ul>
-        <li><strong>Setup:</strong> Create a room or join with a room code</li>
-        <li><strong>Goal:</strong> Don't be caught with the Joker at the end!</li>
-        <li><strong>Pairs:</strong> Two cards with the same rank and color (♥♦ or ♠♣)</li>
-        <li><strong>Turn:</strong> Auto-stock pairs, then select and give one card to the next player</li>
-        <li><strong>Endgame:</strong> The player left holding only the Joker is the "thief" and loses</li>
-      </ul>
+  <div class="center-box" role="main" aria-labelledby="page-title">
+    <div class="brand" aria-hidden="true">
+      <!-- optional: logo -->
+      <!-- <img src="assets/logo.png" alt=""> -->
     </div>
-  </main>
-  <aside class="chat-sidebar">
-  <div class="chat-header">Game Chat</div>
-  <div class="chat-messages" id="chatMessages"></div>
-  <form id="chatForm" autocomplete="off" class="chat-form">
-    <input id="chatInput" type="text" maxlength="160" placeholder="Type a message..." />
-    <button type="submit">Send</button>
-  </form>
-</aside>
 
-</div>
+    <h1 id="page-title">🃏 Joker Thief Card Game</h1>
 
-  
+    <div class="desc">
+      A fast, fun card game to play with friends or challenge the computer. Lightweight, mobile friendly, and multiplayer-ready.
+    </div>
 
-  <script src="/socket.io/socket.io.js"></script>
+    <div class="btn-row" role="navigation" aria-label="Play options">
+      <button id="multiplayerBtn" class="landing-btn" aria-label="Play multiplayer">Play Multiplayer</button>
+      <button id="computerBtn" class="landing-btn secondary" aria-label="Play against computer">Play vs Computer</button>
+    </div>
+
+    <div id="compTag" class="coming-soon" style="display:none" aria-live="polite">Coming soon!</div>
+  </div>
+
   <script>
-    // Galaxy Background Implementation
-    const canvas = document.getElementById('galaxy-canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    
-    if (!gl) {
-      console.error('WebGL not supported');
-    } else {
-      // Vertex shader
-      const vertexShaderSource = `
-        attribute vec2 position;
-        void main() {
-          gl_Position = vec4(position, 0.0, 1.0);
-        }
-      `;
-      
-      // Fragment shader (simplified galaxy effect)
-      const fragmentShaderSource = `
-        precision highp float;
-        uniform float uTime;
-        uniform vec2 uResolution;
-        uniform vec2 uMouse;
-        
-        float hash(vec2 p) {
-          p = fract(p * vec2(123.34, 456.21));
-          p += dot(p, p + 45.32);
-          return fract(p.x * p.y);
-        }
-        
-        float star(vec2 uv, float flare) {
-          float d = length(uv);
-          float m = 0.05 / d;
-          float rays = max(0.0, 1.0 - abs(uv.x * uv.y * 1000.0));
-          m += rays * flare;
-          m *= smoothstep(1.0, 0.2, d);
-          return m;
-        }
-        
-        vec3 starLayer(vec2 uv) {
-          vec3 col = vec3(0.0);
-          vec2 gv = fract(uv) - 0.5;
-          vec2 id = floor(uv);
-          
-          for (int y = -1; y <= 1; y++) {
-            for (int x = -1; x <= 1; x++) {
-              vec2 offset = vec2(float(x), float(y));
-              float seed = hash(id + offset);
-              float size = fract(seed * 345.32);
-              
-              vec2 pad = vec2(sin(seed * 6.28 + uTime * 0.1), cos(seed * 6.28 + uTime * 0.15)) * 0.3;
-              float s = star(gv - offset - pad, size * 0.5);
-              
-              vec3 color = vec3(0.6 + size * 0.4, 0.4 + size * 0.3, 0.8 + size * 0.2);
-              col += s * size * color;
-            }
-          }
-          return col;
-        }
-        
-        void main() {
-          vec2 uv = (gl_FragCoord.xy - uResolution * 0.5) / uResolution.y;
-          
-          // Mouse interaction
-          vec2 mouseOffset = (uMouse - 0.5) * 0.1;
-          uv += mouseOffset;
-          
-          // Rotation
-          float angle = uTime * 0.05;
-          mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
-          uv = rot * uv;
-          
-          vec3 col = vec3(0.0);
-          
-          // Multiple star layers
-          for (float i = 0.0; i < 4.0; i++) {
-            float depth = fract(i * 0.25 + uTime * 0.05);
-            float scale = mix(20.0, 0.5, depth);
-            float fade = depth * smoothstep(1.0, 0.9, depth);
-            col += starLayer(uv * scale + i * 453.32) * fade;
-          }
-          
-          gl_FragColor = vec4(col, 1.0);
-        }
-      `;
-      
-      function createShader(gl, type, source) {
-        const shader = gl.createShader(type);
-        gl.shaderSource(shader, source);
-        gl.compileShader(shader);
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-          console.error('Shader compile error:', gl.getShaderInfoLog(shader));
-          gl.deleteShader(shader);
-          return null;
-        }
-        return shader;
-      }
-      
-      const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-      const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
-      
-      const program = gl.createProgram();
-      gl.attachShader(program, vertexShader);
-      gl.attachShader(program, fragmentShader);
-      gl.linkProgram(program);
-      
-      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Program link error:', gl.getProgramInfoLog(program));
-      }
-      
-      const positionBuffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-      
-      const positionLocation = gl.getAttribLocation(program, 'position');
-      const timeLocation = gl.getUniformLocation(program, 'uTime');
-      const resolutionLocation = gl.getUniformLocation(program, 'uResolution');
-      const mouseLocation = gl.getUniformLocation(program, 'uMouse');
-      
-      let mouseX = 0.5;
-      let mouseY = 0.5;
-      let targetMouseX = 0.5;
-      let targetMouseY = 0.5;
-      
-      document.addEventListener('mousemove', (e) => {
-        targetMouseX = e.clientX / window.innerWidth;
-        targetMouseY = 1.0 - e.clientY / window.innerHeight;
-      });
-      
-      function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        gl.viewport(0, 0, canvas.width, canvas.height);
-      }
-      
-      window.addEventListener('resize', resize);
-      resize();
-      
-      function render(time) {
-        time *= 0.001;
-        
-        mouseX += (targetMouseX - mouseX) * 0.05;
-        mouseY += (targetMouseY - mouseY) * 0.05;
-        
-        gl.clearColor(0, 0, 0, 1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        
-        gl.useProgram(program);
-        gl.enableVertexAttribArray(positionLocation);
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-        
-        gl.uniform1f(timeLocation, time);
-        gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-        gl.uniform2f(mouseLocation, mouseX, mouseY);
-        
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        
-        requestAnimationFrame(render);
-      }
-      
-      requestAnimationFrame(render);
-    }
-    
-    // Game Logic (Socket.IO)
-    const socket = io();
-    
-    let gameState = null;
-    let myHand = [];
-let selectedCardIndex = null;
-let turnTimer = null;
-
-function getTurnTimerValue() {
-  if (!gameState || !gameState.players) return 30;
-  const alivePlayers = gameState.players.filter(p => p.cardCount > 0).length;
-  if (alivePlayers <= 2) return 10;
-  if (alivePlayers === 3) return 20;
-  return 30;
-}
-
-function startTimer() {
-  stopTimer();
-  timeLeft = getTurnTimerValue();
-  show('timerContainer');
-  updateTimerDisplay();
-
-  turnTimer = setInterval(() => {
-    timeLeft--;
-    updateTimerDisplay();
-
-    if (timeLeft <= 0) {
-      stopTimer();
-      autoSelectRandomCard();
-    }
-  }, 1000);
-}
-
-
-const el = (id) => document.getElementById(id);
-const show = (id) => el(id).classList.remove('hidden');
-const hide = (id) => el(id).classList.add('hidden');
-
-// Timer Functions
-function startTimer() {
-  stopTimer();
-  timeLeft = 30;
-  show('timerContainer');
-  updateTimerDisplay();
-  
-  turnTimer = setInterval(() => {
-    timeLeft--;
-    updateTimerDisplay();
-    
-    if (timeLeft <= 0) {
-      stopTimer();
-      autoSelectRandomCard();
-    }
-  }, 1000);
-}
-
-function stopTimer() {
-  if (turnTimer) {
-    clearInterval(turnTimer);
-    turnTimer = null;
-  }
-  hide('timerContainer');
-}
-
-function updateTimerDisplay() {
-  const display = el('timerDisplay');
-  const bar = el('timerBar');
-  const container = el('timerContainer');
-  
-  display.textContent = timeLeft;
-  bar.style.width = `${(timeLeft / getTurnTimerValue()) * 100}%`;
-
-  
-  display.className = 'timer-display';
-  bar.className = 'timer-bar';
-  container.className = 'timer-container';
-  
-  if (timeLeft > 15) {
-    // Normal - blue (30-16 seconds)
-  } else if (timeLeft > 5) {
-    // Warning - orange (15-6 seconds)
-    display.classList.add('warning');
-    bar.classList.add('warning');
-    container.classList.add('warning');
-  } else {
-    // Danger - red (5-0 seconds)
-    display.classList.add('danger');
-    bar.classList.add('danger');
-    container.classList.add('danger');
-  }
-}
-
-function autoSelectRandomCard() {
-  if (myHand.length === 0) return;
-  
-  const randomIndex = Math.floor(Math.random() * myHand.length);
-  selectedCardIndex = randomIndex;
-  
-  const cards = document.querySelectorAll('.card');
-  cards.forEach((card, idx) => {
-    if (idx === randomIndex) {
-      card.classList.add('selected');
-    }
-  });
-  
-  setTimeout(() => {
-    if (selectedCardIndex !== null) {
-      socket.emit('give-card', { cardIndex: selectedCardIndex });
-      selectedCardIndex = null;
-    }
-  }, 500);
-}
-
-el('createRoomBtn').addEventListener('click', () => {
-  const name = el('playerNameInput').value.trim() || 'Player';
-  socket.emit('create-room', { playerName: name });
-});
-
-el('joinRoomBtn').addEventListener('click', () => {
-  const name = el('playerNameInput').value.trim() || 'Player';
-  const roomId = el('roomCodeInput').value.trim().toUpperCase();
-  if (!roomId) {
-    showError('Please enter a room code');
-    return;
-  }
-  socket.emit('join-room', { roomId, playerName: name });
-});
-
-el('startGameBtn').addEventListener('click', () => {
-  socket.emit('start-game');
-});
-
-el('autoPairBtn').addEventListener('click', () => {
-  socket.emit('auto-pair');
-});
-
-el('giveCardBtn').addEventListener('click', () => {
-  if (selectedCardIndex !== null) {
-    socket.emit('give-card', { cardIndex: selectedCardIndex });
-    selectedCardIndex = null;
-    stopTimer();
-  }
-});
-
-socket.on('room-created', ({ roomId }) => {
-  el('roomCode').textContent = roomId;
-  show('roomInfoDiv');
-  show('startGameBtn');
-  hideError();
-});
-
-socket.on('room-joined', ({ roomId }) => {
-  el('roomCode').textContent = roomId;
-  show('roomInfoDiv');
-  hideError();
-});
-
-socket.on('game-state', (state) => {
-  const wasMyTurn = gameState && 
-                    gameState.players[gameState.currentPlayer] && 
-                    gameState.players[gameState.currentPlayer].isMe;
-  
-  gameState = state;
-  
-  if (state.started) {
-    hide('lobbySection');
-    show('gameSection');
-  }
-  
-  const isMyTurn = state.players[state.currentPlayer] && 
-                   state.players[state.currentPlayer].isMe;
-  
-  if (isMyTurn && !wasMyTurn && !state.gameOver) {
-    startTimer();
-  } else if (!isMyTurn || state.gameOver) {
-    stopTimer();
-  }
-  
-  renderGameState();
-});
-
-socket.on('your-hand', ({ hand }) => {
-  myHand = hand;
-  renderHand();
-});
-
-socket.on('error', ({ message }) => {
-  showError(message);
-});
-
-socket.on('player-left', ({ message }) => {
-  showError(message);
-  setTimeout(hideError, 3000);
-});
-
-function renderGameState() {
-  if (!gameState) return;
-
-  const currentPlayer = gameState.players[gameState.currentPlayer];
-  if (gameState.gameOver) {
-    const loser = gameState.players[gameState.loser];
-    el('turnInfo').textContent = `🎭 Game Over! ${loser.name} is the THIEF!`;
-    stopTimer();
-  } else if (gameState.started) {
-    el('turnInfo').textContent = `Turn: ${currentPlayer.name}`;
-  } else {
-    el('turnInfo').textContent = 'Waiting for host to start...';
-  }
-  
-  el('gameInfo').textContent = `Stocked pairs: ${gameState.stock.length}`;
-
-  const pp = el('playersPanel');
-  pp.innerHTML = '';
-  gameState.players.forEach((player, idx) => {
-    const div = document.createElement('div');
-    let className = 'player';
-    if (player.isMe) className += ' me';
-    if (player.isCurrent) className += ' activeP';
-    div.className = className;
-    
-    const badge = player.isMe ? '<div class="badge">YOU</div>' : '';
-    const done = player.cardCount === 0 ? ' ✅' : '';
-    
-    div.innerHTML = `
-      ${badge}
-      <div><strong>${player.name}</strong></div>
-      <div>Cards: ${player.cardCount}${done}</div>
-    `;
-    pp.appendChild(div);
-  });
-
-  const sa = el('stockArea');
-  sa.innerHTML = '';
-  if (gameState.stock.length === 0) {
-    sa.innerHTML = '<div style="color: #6b7280;">No pairs yet</div>';
-  } else {
-    gameState.stock.forEach(pair => {
-      const div = document.createElement('div');
-      div.className = 'pair';
-      div.textContent = `${pair[0].id} + ${pair[1].id}`;
-      sa.appendChild(div);
-    });
-  }
-}
-
-function renderHand() {
-  const ah = el('activeHand');
-  ah.innerHTML = '';
-  
-  const isMyTurn = gameState && 
-                   gameState.players[gameState.currentPlayer] && 
-                   gameState.players[gameState.currentPlayer].isMe;
-
-  if (myHand.length === 0) {
-    ah.innerHTML = '<div style="color: #6b7280; padding: 20px;">No cards - you\'re safe!</div>';
-    el('giveCardBtn').disabled = true;
-    el('autoPairBtn').disabled = true;
-    stopTimer();
-  } else {
-    myHand.forEach((card, idx) => {
-      const cardDiv = document.createElement('div');
-      const isJoker = card.id === 'JK';
-      let colorClass = isJoker ? 'joker' : (card.color === 'red' ? 'red' : 'black');
-      cardDiv.className = `card ${colorClass}`;
-      cardDiv.dataset.index = idx;
-
-      if (isJoker) {
-        cardDiv.innerHTML = `
-          <div class="corner tl">🃏</div>
-          <div class="suit-big" style="font-family: serif;">JOKER</div>
-          <div class="corner br">🃏</div>
-        `;
-      } else {
-        const suitSymbol = card.suit;
-        cardDiv.innerHTML = `
-          <div class="corner tl">${card.rank}<span>${suitSymbol}</span></div>
-          <div class="suit-big">${suitSymbol}</div>
-          <div class="corner br">${card.rank}<span>${suitSymbol}</span></div>
-        `;
-      }
-      
-      if (isMyTurn) {
-        cardDiv.addEventListener('click', () => {
-          selectedCardIndex = idx;
-          [...ah.children].forEach(d => d.classList.remove('selected'));
-          cardDiv.classList.add('selected');
-          el('giveCardBtn').disabled = false;
-        });
-      }
-      
-      ah.appendChild(cardDiv);
+    document.getElementById('multiplayerBtn').addEventListener('click', function() {
+      // navigate to multiplayer page in the same public folder
+      window.location.href = './multiplayer.html';
     });
 
-    el('autoPairBtn').disabled = !isMyTurn;
-    el('giveCardBtn').disabled = !isMyTurn || selectedCardIndex === null;
-  }
-}
-
-function showError(msg) {
-  el('errorMsg').textContent = msg;
-  show('errorMsg');
-}
-
-function hideError() {
-  hide('errorMsg');
-}
-
-// ---- REAL-TIME CHAT SOCKET.IO ----
-const chatForm = document.getElementById('chatForm');
-const chatInput = document.getElementById('chatInput');
-const chatMessages = document.getElementById('chatMessages');
-
-chatForm.addEventListener('submit', function(e){
-  e.preventDefault();
-  const msg = chatInput.value.trim();
-  if (msg.length > 0) {
-    socket.emit('chat-message', { message: msg });
-    chatInput.value = '';
-  }
+    document.getElementById('computerBtn').addEventListener('click', function() {
+  window.location.href = './computer.html';
 });
-
-
-
-socket.on('chat-message', ({ playerName, message, isMe }) => {
-  addChatMessage(playerName, message, isMe);
-});
-
-function addChatMessage(playerName, message, isMe) {
-  const msgDiv = document.createElement('div');
-  msgDiv.classList.add('chat-message');
-  if (isMe) msgDiv.classList.add('self');
-  msgDiv.innerHTML = `<span class="meta">${playerName || 'Player'}</span>: ${escapeHtml(message)}`;
-  chatMessages.appendChild(msgDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function escapeHtml (unsafe) {
-  return unsafe.replace(/[&<"']/g, function(m) {
-    switch (m) {
-      case '&': return "&amp;";
-      case '<': return "&lt;";
-      case '"': return "&quot;";
-      case "'": return "&#039;";
-    }
-  });
-}
-
   </script>
 </body>
 </html>
